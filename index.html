@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRM Lift Transfer – Knowledge Quiz</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Syne:wght@700;800&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:#0D2A5E; --navy-mid:#1A4080; --blue:#2563EB; --sky:#EFF6FF;
+    --correct:#16A34A; --correct-bg:#F0FDF4; --correct-border:#86EFAC;
+    --wrong:#DC2626; --wrong-bg:#FEF2F2; --wrong-border:#FECACA;
+    --n100:#F3F4F6; --n200:#E5E7EB; --n400:#9CA3AF; --n600:#4B5563; --n800:#1F2937;
+    --radius:12px;
+  }
+  body { font-family:'Inter',sans-serif; background:#F0F4F8; color:var(--n800); min-height:100vh; padding:40px 20px 60px; }
+
+  /* ── Name Screen ── */
+  .name-screen { max-width:480px; margin:60px auto; }
+  .name-card { background:#fff; border:1px solid var(--n200); border-radius:var(--radius); overflow:hidden; }
+  .name-card-header { background:var(--navy); padding:32px; text-align:center; }
+  .name-card-header h2 { font-family:'Syne',sans-serif; font-size:22px; font-weight:800; color:#fff; margin-bottom:6px; }
+  .name-card-header p { font-size:13px; color:#A8C4E0; }
+  .name-card-body { padding:28px 32px; }
+  .field-label { font-size:12px; font-weight:600; color:var(--n600); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:7px; display:block; }
+  .field-input { width:100%; padding:11px 14px; border:1.5px solid var(--n200); border-radius:8px; font-size:14px; font-family:'Inter',sans-serif; color:var(--n800); outline:none; transition:border-color .15s; }
+  .field-input:focus { border-color:var(--blue); }
+  .field-row { margin-bottom:16px; }
+  .btn-start { width:100%; background:var(--navy); color:#fff; border:none; border-radius:8px; padding:13px; font-size:14px; font-weight:700; font-family:'Inter',sans-serif; cursor:pointer; transition:background .15s; margin-top:4px; }
+  .btn-start:hover { background:var(--navy-mid); }
+  .name-error { font-size:12px; color:var(--wrong); margin-top:6px; display:none; }
+
+  /* ── Header ── */
+  .header { max-width:760px; margin:0 auto 36px; background:var(--navy); border-radius:var(--radius); padding:36px 40px; position:relative; overflow:hidden; display:none; }
+  .header.visible { display:block; }
+  .header::after { content:''; position:absolute; right:-40px; top:-40px; width:220px; height:220px; background:radial-gradient(circle,rgba(37,99,235,.35) 0%,transparent 70%); border-radius:50%; }
+  .header-eyebrow { font-size:11px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:#7FA8D4; margin-bottom:10px; }
+  .header h1 { font-family:'Syne',sans-serif; font-size:26px; font-weight:800; color:#fff; line-height:1.2; margin-bottom:8px; position:relative; z-index:1; }
+  .header p { font-size:14px; color:#A8C4E0; line-height:1.6; position:relative; z-index:1; }
+  .header-meta { display:flex; gap:12px; margin-top:20px; flex-wrap:wrap; }
+  .meta-pill { background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2); border-radius:20px; padding:5px 14px; font-size:12px; color:#fff; font-weight:500; }
+  .player-pill { background:rgba(255,255,255,.15); border:1px solid rgba(255,255,255,.3); border-radius:20px; padding:5px 14px; font-size:12px; color:#fff; font-weight:600; }
+
+  /* ── Progress ── */
+  .progress-wrap { max-width:760px; margin:0 auto 28px; display:none; }
+  .progress-wrap.visible { display:block; }
+  .progress-bar-bg { height:6px; background:var(--n200); border-radius:99px; overflow:hidden; margin-bottom:8px; }
+  .progress-bar-fill { height:100%; background:linear-gradient(90deg,var(--blue),#38BDF8); border-radius:99px; width:0%; transition:width .5s ease; }
+  .progress-label { font-size:12px; color:var(--n400); font-weight:500; }
+
+  /* ── Question Card ── */
+  .question-card { max-width:760px; margin:0 auto 20px; background:#fff; border:1px solid var(--n200); border-radius:var(--radius); overflow:hidden; transition:box-shadow .2s; }
+  .question-card:hover { box-shadow:0 4px 20px rgba(0,0,0,.07); }
+  .question-header { display:flex; align-items:flex-start; gap:16px; padding:22px 24px 16px; border-bottom:1px solid var(--n100); }
+  .q-number { flex-shrink:0; width:32px; height:32px; background:var(--navy); border-radius:8px; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-size:14px; font-weight:700; color:#fff; margin-top:1px; }
+  .q-text { font-size:14.5px; font-weight:500; color:var(--n800); line-height:1.6; flex:1; }
+  .options-list { padding:14px 24px 20px; display:flex; flex-direction:column; gap:10px; }
+  .option { display:flex; align-items:flex-start; gap:12px; padding:12px 16px; border:1.5px solid var(--n200); border-radius:8px; cursor:pointer; transition:border-color .15s,background .15s; user-select:none; }
+  .option:hover { border-color:var(--blue); background:var(--sky); }
+  .option-marker { flex-shrink:0; width:20px; height:20px; border:2px solid #D1D5DB; border-radius:50%; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:all .15s; background:#fff; }
+  .option-marker-inner { width:8px; height:8px; border-radius:50%; background:var(--blue); opacity:0; transform:scale(0); transition:all .15s; }
+  .option.selected .option-marker { border-color:var(--blue); background:var(--blue); }
+  .option.selected .option-marker-inner { opacity:1; transform:scale(1); background:#fff; }
+  .option.selected { border-color:var(--blue); background:var(--sky); }
+  .option.correct-answer { border-color:var(--correct-border); background:var(--correct-bg); }
+  .option.correct-answer .option-marker { border-color:var(--correct); background:var(--correct); }
+  .option.correct-answer .option-marker-inner { opacity:1; transform:scale(1); background:#fff; }
+  .option.wrong-answer { border-color:var(--wrong-border); background:var(--wrong-bg); }
+  .option.wrong-answer .option-marker { border-color:var(--wrong); background:var(--wrong); }
+  .option.wrong-answer .option-marker-inner { opacity:1; transform:scale(1); background:#fff; width:10px; height:2px; border-radius:0; box-shadow:0 2px 0 #fff; }
+  .option-text { font-size:13.5px; color:var(--n600); line-height:1.5; padding-top:1px; }
+  .option.correct-answer .option-text { color:var(--correct); font-weight:500; }
+  .option.wrong-answer .option-text { color:var(--wrong); }
+  .option.disabled { cursor:default; pointer-events:none; }
+  .option.disabled:not(.correct-answer):not(.wrong-answer) { opacity:.5; }
+  .feedback-tag { display:none; font-size:11px; font-weight:600; padding:2px 8px; border-radius:20px; margin-left:auto; flex-shrink:0; align-self:center; text-transform:uppercase; letter-spacing:.5px; }
+  .option.correct-answer .feedback-tag { display:block; background:#DCFCE7; color:var(--correct); }
+  .option.wrong-answer .feedback-tag { display:block; background:var(--wrong-bg); color:var(--wrong); }
+  .card-footer { padding:0 24px 20px; display:flex; justify-content:flex-end; }
+  .btn-check { background:var(--navy); color:#fff; border:none; border-radius:8px; padding:10px 22px; font-size:13px; font-weight:600; cursor:pointer; font-family:'Inter',sans-serif; transition:background .15s,transform .1s; display:none; }
+  .btn-check:hover { background:var(--navy-mid); transform:translateY(-1px); }
+  .btn-check.visible { display:block; }
+  .btn-check:disabled { background:var(--n400); cursor:default; transform:none; }
+
+  /* ── Score Card ── */
+  .score-card { max-width:760px; margin:0 auto 24px; background:var(--navy); border-radius:var(--radius); padding:40px; text-align:center; display:none; }
+  .score-card.visible { display:block; }
+  .score-name { font-size:13px; color:#7FA8D4; margin-bottom:6px; letter-spacing:.5px; }
+  .score-big { font-family:'Syne',sans-serif; font-size:64px; font-weight:800; color:#fff; line-height:1; margin-bottom:6px; }
+  .score-label { font-size:14px; color:#A8C4E0; margin-bottom:24px; }
+  .score-bar-wrap { background:rgba(255,255,255,.15); border-radius:99px; height:10px; overflow:hidden; margin:0 auto 28px; max-width:400px; }
+  .score-bar-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#38BDF8,#34D399); transition:width 1s ease; }
+  .score-message { font-size:16px; font-weight:600; color:#fff; margin-bottom:8px; }
+  .score-sub { font-size:13px; color:#A8C4E0; margin-bottom:28px; }
+  .score-btns { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+  .btn-retry { background:#fff; color:var(--navy); border:none; border-radius:8px; padding:12px 28px; font-size:14px; font-weight:700; cursor:pointer; font-family:'Inter',sans-serif; transition:opacity .15s; }
+  .btn-retry:hover { opacity:.9; }
+
+  /* ── Leaderboard ── */
+  .leaderboard { max-width:760px; margin:0 auto 24px; background:#fff; border:1px solid var(--n200); border-radius:var(--radius); overflow:hidden; display:none; }
+  .leaderboard.visible { display:block; }
+  .lb-header { background:var(--navy); padding:18px 24px; display:flex; align-items:center; justify-content:space-between; }
+  .lb-header h3 { font-family:'Syne',sans-serif; font-size:16px; font-weight:700; color:#fff; }
+  .lb-header span { font-size:12px; color:#A8C4E0; }
+  .lb-row { display:flex; align-items:center; gap:14px; padding:13px 24px; border-bottom:1px solid var(--n100); }
+  .lb-row:last-child { border-bottom:none; }
+  .lb-rank { width:28px; height:28px; border-radius:50%; background:var(--n100); display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:var(--n600); flex-shrink:0; }
+  .lb-rank.gold { background:#FEF3C7; color:#92400E; }
+  .lb-rank.silver { background:#F3F4F6; color:#374151; }
+  .lb-rank.bronze { background:#FEF0E6; color:#92400E; }
+  .lb-name { flex:1; font-size:14px; font-weight:500; color:var(--n800); }
+  .lb-date { font-size:11px; color:var(--n400); }
+  .lb-score { font-size:13px; font-weight:700; padding:4px 12px; border-radius:20px; }
+  .lb-score.high { background:#DCFCE7; color:var(--correct); }
+  .lb-score.mid  { background:#FEF3C7; color:#92400E; }
+  .lb-score.low  { background:var(--wrong-bg); color:var(--wrong); }
+  .lb-empty { padding:24px; text-align:center; font-size:13px; color:var(--n400); font-style:italic; }
+  .lb-loading { padding:24px; text-align:center; font-size:13px; color:var(--n400); }
+
+  /* ── Admin Panel ── */
+  .admin-toggle { max-width:760px; margin:0 auto 16px; text-align:right; }
+  .btn-admin { background:none; border:1px solid var(--n200); border-radius:8px; padding:7px 16px; font-size:12px; color:var(--n400); cursor:pointer; font-family:'Inter',sans-serif; transition:all .15s; display:none; }
+  .btn-admin:hover { border-color:var(--navy); color:var(--navy); }
+  .btn-admin.visible { display:inline-block; }
+
+  @media(max-width:600px){
+    .header { padding:28px 24px; }
+    .header h1 { font-size:20px; }
+    .question-header,.options-list,.card-footer { padding-left:16px; padding-right:16px; }
+    .score-card { padding:28px 20px; }
+    .name-card-body { padding:24px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- NAME SCREEN -->
+<div class="name-screen" id="nameScreen">
+  <div class="name-card">
+    <div class="name-card-header">
+      <div style="font-size:11px;font-weight:600;letter-spacing:2px;color:#7FA8D4;text-transform:uppercase;margin-bottom:10px;">Pacific Aviation · SAS Boston</div>
+      <h2>PRM Lift Transfer Quiz</h2>
+      <p>CSVCT4200 · Enter your name to begin</p>
+    </div>
+    <div class="name-card-body">
+      <div class="field-row">
+        <label class="field-label" for="firstName">First Name</label>
+        <input class="field-input" type="text" id="firstName" placeholder="e.g. John" autocomplete="given-name">
+      </div>
+      <div class="field-row">
+        <label class="field-label" for="lastName">Last Name</label>
+        <input class="field-input" type="text" id="lastName" placeholder="e.g. Smith" autocomplete="family-name">
+        <div class="name-error" id="nameError">Please enter your first and last name.</div>
+      </div>
+      <button class="btn-start" onclick="startQuiz()">Start Quiz →</button>
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
+<div class="header" id="quizHeader">
+  <div class="header-eyebrow">Pacific Aviation · SAS Boston · Training</div>
+  <h1>PRM Lift Transfer<br>Knowledge Quiz</h1>
+  <p>CSVCT4200 – Lift Transfer Assist Instructor Qualification</p>
+  <div class="header-meta">
+    <span class="meta-pill">20 Questions</span>
+    <span class="meta-pill">Multiple Choice</span>
+    <span class="meta-pill">A321 XLR · Business Class</span>
+    <span class="player-pill" id="playerPill">👤 —</span>
+  </div>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-wrap" id="progressWrap">
+  <div class="progress-bar-bg"><div class="progress-bar-fill" id="progressBar"></div></div>
+  <div class="progress-label" id="progressLabel">0 of 20 answered</div>
+</div>
+
+<!-- QUESTIONS -->
+<div id="quizContainer"></div>
+
+<!-- SCORE CARD -->
+<div class="score-card" id="scoreCard">
+  <div class="score-name" id="scoreName"></div>
+  <div class="score-big" id="scoreNum">0/20</div>
+  <div class="score-label">Final Score</div>
+  <div class="score-bar-wrap"><div class="score-bar-fill" id="scoreBar" style="width:0%"></div></div>
+  <div class="score-message" id="scoreMsg"></div>
+  <div class="score-sub" id="scoreSub"></div>
+  <div class="score-btns">
+    <button class="btn-retry" onclick="resetQuiz()">Try Again</button>
+  </div>
+</div>
+
+<!-- ADMIN TOGGLE -->
+<div class="admin-toggle">
+  <button class="btn-admin" id="btnAdmin" onclick="toggleLeaderboard()">📊 View Results</button>
+</div>
+
+<!-- LEADERBOARD -->
+<div class="leaderboard" id="leaderboard">
+  <div class="lb-header">
+    <h3>📊 Employee Results</h3>
+    <span id="lbCount">Loading…</span>
+  </div>
+  <div id="lbBody"><div class="lb-loading">Loading results…</div></div>
+</div>
+
+<script>
+const STORAGE_KEY = 'prm_quiz_results';
+let currentPlayer = '';
+let answered = 0;
+let score = 0;
+
+const questions = [
+  { q:"Role #3 begins lifting the customer using the remote. You are Role #1 and realize you haven't asked the customer if they're ready or comfortable. The customer appears tense and is gripping the chair tightly. What action should you take?", options:["Pause the lift immediately and ask the customer if they feel ready and comfortable before proceeding","Continue the lift, move quickly to minimize the time the customer feels tense, and offer reassurance afterward","Ask the Flight Attendant to reassure the customer","Proceed quickly to minimize discomfort"], correct:0 },
+  { q:"What should you do if the required four team members are not available to perform a PRM transfer?", options:["Ask the flight attendants to assist","Use a transfer board and proceed with caution","Escalate to a supervisor and delay starting the transfer","Request gate agent assistance and proceed with caution"], correct:2 },
+  { q:"Before securing the customer with the straps, what is one critical question Role #1 must ask to ensure safety?", options:["\"This is a complicated process, would you like for us to carry you?\"","\"Are you ready?\"","\"Do you have any medical devices, tubes, or sensitive areas we should know about?\"","\"Well it's time to move you, let me strap you in.\""], correct:2 },
+  { q:"What is the primary purpose of the PRM Lift?", options:["To replace manual lifting procedures","To transfer customers with reduced mobility safely into a business class suite on the A321 XLR aircraft","To transfer customers with reduced mobility safely into a main cabin seat on the A321 XLR aircraft","To reduce boarding time"], correct:1 },
+  { q:"Why is communication and coordination between all four roles critical during a PRM transfer?", options:["It ensures the lift is operated faster to save time","It allows agents to work independently without supervision","It helps reduce the number of agents needed for the transfer","It prevents errors, ensures safety, and supports a smooth customer experience"], correct:3 },
+  { q:"What is the purpose of the adjustable track?", options:["To secure the sling","To lock the PRM lift chair","To store the PRM lift chair","To position the lift with the business class seat"], correct:3 },
+  { q:"While moving the PRM lift into the aircraft, Role #3 notices the ramp is slightly tilted and unstable. What is the correct action to take?", options:["Proceed slowly and hope the ramp holds","Stop movement immediately and reposition the ramp to ensure stability","Notify the Flight Attendant and continue with caution","Ask Role #2 to hold the ramp steady while continuing"], correct:1 },
+  { q:"You arrive at the gate and discover only two trained team members are available for the PRM transfer. The flight is boarding soon, and the gate agent asks you to \"make it work.\" What should you do?", options:["Escalate the issue to a supervisor and inform the gate agent that the transfer cannot proceed without four trained team members","Ask the companion to assist temporarily","Attempt the transfer with three agents to avoid delays","Proceed with the transfer but skip non-essential steps"], correct:0 },
+  { q:"During a transfer, you notice Role #4 pulling the PRM Lift backwards with their feet in line and leaning forward from the waist. What is the correct ergonomic adjustment they should make?", options:["Pull faster to reduce time under strain","Stagger their feet, engage leg muscles, and keep body weight centered","Keep feet in line but bend knees deeper","Turn their body to reduce strain"], correct:1 },
+  { q:"What key actions must Role #2 do during the transfer?", options:["Secure the sling","Collapse the PRM lift chair","Operate the remote and briefly collapse the PRM lift chair","Guide customer's leg positioning and monitor stability"], correct:3 },
+  { q:"Which phrase best communicates care during a transfer?", options:["\"We have to move you now.\"","\"Sit still while we adjust you.\"","\"This will be quick if you cooperate.\"","\"We'll move together when you're ready.\""], correct:3 },
+  { q:"What phrase helps reassure a nervous customer during lift movement?", options:["\"Don't worry, we've done this before.\"","\"We're lifting slowly. Let me know if anything feels uncomfortable.\"","\"Don't be nervous, just close your eyes, and we'll move fast.\"","\"Hold on tight. Stay still.\""], correct:1 },
+  { q:"Which component carries the customer's body during the lift transfer?", options:["Sling","Ramp","Velcro Straps","PRM blanket"], correct:0 },
+  { q:"While all roles support the customer transfer, which role provides direct assistance to the customer during transfer?", options:["Role #3","Role #2","Role #1","Role #4"], correct:2 },
+  { q:"A customer's companion steps forward and tries to assist with the transfer. What is the most appropriate response?", options:["Ask them to wait outside the aircraft","Politely explain that only trained team members may assist","Allow them to help if they seem confident","Ignore them and continue the transfer"], correct:1 },
+  { q:"How many team members are required for a PRM transfer?", options:["4","3","2","5"], correct:0 },
+  { q:"Which role is responsible for briefing the flight attendant?", options:["Role #3","Role #2","Role #1","Role #4"], correct:2 },
+  { q:"Which role manages the PRM lift chair?", options:["Role #4","Role #2","Role #3","Role #1"], correct:0 },
+  { q:"Which component connects the sling to the PRM lift?", options:["Velcro strap","Handlebar","Remote control","Track bar"], correct:3 },
+  { q:"Which component must be fully charged before using the PRM lift?", options:["Battery","Sling","Remote","Key Fob"], correct:0 }
+];
+
+const SHEETS_URL = 'https://script.google.com/macros/s/AKfycby5Dq3P6yixlX6MumVmjo68GmJcvXv7Iy3uymSKqVxS6OGQR9bu_SYJ4Sg_kwfzCitK/exec';
+
+// ── Storage helpers ──
+async function saveResult(name, score, total) {
+  const entry = { name, score, total, pct: Math.round(score/total*100), date: new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}), time: new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'}) };
+  // Send to Google Sheets
+  try {
+    fetch(SHEETS_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry)
+    });
+  } catch(e) { console.warn('Sheets save failed', e); }
+  // Also save locally for leaderboard
+  try {
+    let existing = [];
+    try { const r = await window.storage.get(STORAGE_KEY, true); if(r) existing = JSON.parse(r.value); } catch(e) {}
+    existing.push(entry);
+    await window.storage.set(STORAGE_KEY, JSON.stringify(existing), true);
+  } catch(e) { console.warn('Local storage save failed', e); }
+}
+
+async function loadResults() {
+  try {
+    const r = await window.storage.get(STORAGE_KEY, true);
+    if (!r) return [];
+    return JSON.parse(r.value);
+  } catch(e) { return []; }
+}
+
+// ── Name screen ──
+function startQuiz() {
+  const fn = document.getElementById('firstName').value.trim();
+  const ln = document.getElementById('lastName').value.trim();
+  if (!fn || !ln) { document.getElementById('nameError').style.display = 'block'; return; }
+  document.getElementById('nameError').style.display = 'none';
+  currentPlayer = fn + ' ' + ln;
+  document.getElementById('nameScreen').style.display = 'none';
+  document.getElementById('quizHeader').classList.add('visible');
+  document.getElementById('progressWrap').classList.add('visible');
+  document.getElementById('playerPill').textContent = '👤 ' + currentPlayer;
+  buildQuiz();
+}
+
+document.getElementById('firstName').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('lastName').focus(); });
+document.getElementById('lastName').addEventListener('keydown', e => { if(e.key==='Enter') startQuiz(); });
+
+// ── Quiz ──
+function buildQuiz() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '';
+  answered = 0; score = 0;
+  updateProgress();
+  const letters = ['A','B','C','D'];
+  questions.forEach((q, qi) => {
+    const card = document.createElement('div');
+    card.className = 'question-card';
+    card.id = `card-${qi}`;
+    card.innerHTML = `
+      <div class="question-header">
+        <div class="q-number">${qi+1}</div>
+        <div class="q-text">${q.q}</div>
+      </div>
+      <div class="options-list">
+        ${q.options.map((opt,oi) => `
+          <div class="option" data-qi="${qi}" data-oi="${oi}" onclick="selectOption(this,${qi},${oi})">
+            <div class="option-marker"><div class="option-marker-inner"></div></div>
+            <div class="option-text"><strong>${letters[oi]}.</strong> ${opt}</div>
+            <span class="feedback-tag"></span>
+          </div>`).join('')}
+      </div>
+      <div class="card-footer">
+        <button class="btn-check" id="btn-${qi}" onclick="checkAnswer(${qi})">Check Answer</button>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function selectOption(el, qi, oi) {
+  const card = document.getElementById(`card-${qi}`);
+  if (card.dataset.answered) return;
+  card.querySelectorAll('.option').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  card.dataset.selected = oi;
+  document.getElementById(`btn-${qi}`).classList.add('visible');
+}
+
+function checkAnswer(qi) {
+  const card = document.getElementById(`card-${qi}`);
+  if (card.dataset.answered) return;
+  const selected = parseInt(card.dataset.selected);
+  const correct  = questions[qi].correct;
+  const btn      = document.getElementById(`btn-${qi}`);
+  card.querySelectorAll('.option').forEach((opt,oi) => {
+    opt.classList.add('disabled');
+    if (oi===correct) { opt.classList.add('correct-answer'); opt.querySelector('.feedback-tag').textContent='✓ Correct'; }
+    if (oi===selected && selected!==correct) { opt.classList.add('wrong-answer'); opt.querySelector('.feedback-tag').textContent='✗ Wrong'; }
+  });
+  if (selected===correct) score++;
+  card.dataset.answered='1';
+  btn.disabled=true;
+  btn.textContent = selected===correct ? '✓ Correct!' : '✗ Incorrect';
+  btn.style.background = selected===correct ? '#16A34A' : '#DC2626';
+  answered++;
+  updateProgress();
+  if (answered===questions.length) setTimeout(showScore, 600);
+}
+
+function updateProgress() {
+  const pct = (answered/questions.length)*100;
+  document.getElementById('progressBar').style.width = pct+'%';
+  document.getElementById('progressLabel').textContent = `${answered} of ${questions.length} answered`;
+}
+
+async function showScore() {
+  await saveResult(currentPlayer, score, questions.length);
+  const sc = document.getElementById('scoreCard');
+  sc.classList.add('visible');
+  sc.scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('scoreName').textContent = currentPlayer;
+  document.getElementById('scoreNum').textContent = `${score}/${questions.length}`;
+  const pct = Math.round(score/questions.length*100);
+  setTimeout(() => { document.getElementById('scoreBar').style.width = pct+'%'; }, 200);
+  let msg, sub;
+  if (pct===100)     { msg='🏆 Perfect Score!';  sub='Outstanding — you are fully prepared for DFW training.'; }
+  else if (pct>=80)  { msg='✅ Great Result!';    sub='Strong understanding. Review any missed questions before training.'; }
+  else if (pct>=60)  { msg='📖 Good Effort';      sub='A few areas need review. Go over the missed questions carefully.'; }
+  else               { msg='🔄 Keep Studying';    sub='Review the PRM Lift Transfer material and try again.'; }
+  document.getElementById('scoreMsg').textContent = msg;
+  document.getElementById('scoreSub').textContent = sub;
+  document.getElementById('btnAdmin').classList.add('visible');
+}
+
+function resetQuiz() {
+  document.getElementById('scoreCard').classList.remove('visible');
+  document.getElementById('leaderboard').classList.remove('visible');
+  document.getElementById('btnAdmin').classList.remove('visible');
+  document.getElementById('nameScreen').style.display = 'block';
+  document.getElementById('quizHeader').classList.remove('visible');
+  document.getElementById('progressWrap').classList.remove('visible');
+  document.getElementById('quizContainer').innerHTML = '';
+  document.getElementById('firstName').value = '';
+  document.getElementById('lastName').value = '';
+  currentPlayer = '';
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+// ── Leaderboard ──
+async function toggleLeaderboard() {
+  const lb = document.getElementById('leaderboard');
+  if (lb.classList.contains('visible')) { lb.classList.remove('visible'); return; }
+  lb.classList.add('visible');
+  lb.scrollIntoView({behavior:'smooth', block:'start'});
+  await renderLeaderboard();
+}
+
+async function renderLeaderboard() {
+  const results = await loadResults();
+  const lbBody  = document.getElementById('lbBody');
+  const lbCount = document.getElementById('lbCount');
+
+  if (!results.length) {
+    lbBody.innerHTML = '<div class="lb-empty">No results yet.</div>';
+    lbCount.textContent = '0 attempts';
+    return;
+  }
+
+  // Sort by score desc, then date desc
+  results.sort((a,b) => b.pct - a.pct || 0);
+  lbCount.textContent = `${results.length} attempt${results.length!==1?'s':''}`;
+
+  const rankClasses = ['gold','silver','bronze'];
+  lbBody.innerHTML = results.map((r,i) => {
+    const rankClass = i < 3 ? rankClasses[i] : '';
+    const scoreClass = r.pct >= 80 ? 'high' : r.pct >= 60 ? 'mid' : 'low';
+    const medal = i===0 ? '🥇' : i===1 ? '🥈' : i===2 ? '🥉' : (i+1);
+    return `
+      <div class="lb-row">
+        <div class="lb-rank ${rankClass}">${medal}</div>
+        <div class="lb-name">${r.name}</div>
+        <div class="lb-date">${r.date} · ${r.time}</div>
+        <div class="lb-score ${scoreClass}">${r.score}/${r.total} &nbsp;(${r.pct}%)</div>
+      </div>`;
+  }).join('');
+}
+</script>
+</body>
+</html>
